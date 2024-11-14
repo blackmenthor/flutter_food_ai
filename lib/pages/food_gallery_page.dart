@@ -45,8 +45,13 @@ class _FoodGalleryPageState extends State<FoodGalleryPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Your Food Gallery page',
+          'Calorie Intake',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
         ),
+        centerTitle: true,
         actions: [
           InkWell(
             onTap: () async {
@@ -80,75 +85,64 @@ class _FoodGalleryPageState extends State<FoodGalleryPage> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Today is $formattedToday',
+            Center(
+              child: Image.asset(
+                'assets/images/user.png',
+                height: 128,
+              ),
             ),
             const SizedBox(
-              height: 8.0,
+              height: 16,
             ),
-            Text(
-              'Your target weight is ${sharedPreferencesController.targetWeight} Kg',
-            ),
-            const SizedBox(
-              height: 8.0,
-            ),
-            Text(
-              'Your target calories per day is ${sharedPreferencesController.targetCaloriesPerDay} calories',
-            ),
-            const SizedBox(
-              height: 8.0,
-            ),
-            if (totalCaloriesToGo > 0) ...[
-              Text(
-                'You need $totalCaloriesToGo calories left for today!',
-              ),
-            ] else if (totalCaloriesToGo == 0) ...[
-              const Text(
-                'Well done!',
-              ),
-            ] else if (totalCaloriesToGo < 0) ...[
-              const Text(
-                'You are already over your calories consumption for the day!',
-              ),
-            ],
-            const SizedBox(
-              height: 16.0,
-            ),
-            if (imagesToCalories.isNotEmpty) ...[
-              const Text(
-                'Foods you ate today:',
-              ),
-              const SizedBox(
-                height: 8,
-              ),
-              Expanded(
-                child: ListView(
-                  children: imagesToCalories.keys
-                      .map(
-                        (imagePath) => ListTile(
-                          title: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Image.file(
-                              File(imagePath),
-                            ),
-                          ),
-                          subtitle: Text(
-                            'Total calories: ${imagesToCalories[imagePath]} calories.',
-                          ),
-                        ),
-                      )
-                      .toList(),
+            const Center(
+              child: Text(
+                'Angga, 29',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ] else ...[
-              const Spacer(),
-            ],
+            ),
+            Center(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text:
+                          'Your ideal weight is ${sharedPreferencesController.targetWeight} kg. ',
+                    ),
+                    if (totalCaloriesToGo > 0) ...[
+                      TextSpan(
+                        text:
+                            'You have $totalCaloriesToGo calories left today.',
+                      ),
+                    ] else if (totalCaloriesToGo == 0) ...[
+                      const TextSpan(
+                        text: 'You have all your calories for today!',
+                      ),
+                    ] else ...[
+                      TextSpan(
+                        text:
+                            'You have ${totalCaloriesToGo.abs()} calories over for today!',
+                      ),
+                    ],
+                  ],
+                ),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                ),
+              ),
+            ),
             const SizedBox(
-              height: 16.0,
+              height: 16,
             ),
             SizedBox(
               width: double.infinity,
               child: MaterialButton(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 color: Colors.blue,
                 onPressed: _isLoading
                     ? null
@@ -161,7 +155,6 @@ class _FoodGalleryPageState extends State<FoodGalleryPage> {
                             source: ImageSource.gallery,
                           );
                           if (result != null) {
-                            print(result.path);
                             const prompt =
                                 'Hi, can you get from this image roughly '
                                 'how many calories will I get if I eat this. '
@@ -179,14 +172,12 @@ class _FoodGalleryPageState extends State<FoodGalleryPage> {
                             if (answer == null) {
                               throw Exception('no answer received!');
                             }
-                            print('answer $answer');
                             final jsonBody = answer
                                 .replaceAll('```json', '')
                                 .replaceAll('```', '');
                             final Map<String, dynamic> jsonDecoded =
                                 jsonDecode(jsonBody);
 
-                            print(jsonDecoded);
                             final totalCalories = jsonDecoded['total_calories'];
 
                             imagesToCalories[result.path] = totalCalories;
@@ -202,12 +193,46 @@ class _FoodGalleryPageState extends State<FoodGalleryPage> {
                 child: _isLoading
                     ? const CircularProgressIndicator()
                     : const Text(
-                        'Upload image',
+                        'Add food image',
                         style: TextStyle(
                           color: Colors.white,
                         ),
                       ),
               ),
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 3,
+                mainAxisSpacing: 16,
+                children: imagesToCalories.keys
+                    .map(
+                      (imagePath) => Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.file(
+                              File(imagePath),
+                            ),
+                          ),
+                          Text(
+                            '${imagesToCalories[imagePath]} calories.',
+                            style: const TextStyle(
+                              fontSize: 16.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+            const SizedBox(
+              height: 16.0,
             ),
           ],
         ),

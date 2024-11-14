@@ -34,6 +34,7 @@ class _HomePageState extends State<HomePage> {
   SharedPreferencesController get sharedPrefsController =>
       widget.sharedPreferencesController;
   Map<int, int> weightToCaloriesConsumption = {};
+
   dynamic _error;
   bool _isLoading = false;
   int? weightTarget;
@@ -103,7 +104,7 @@ class _HomePageState extends State<HomePage> {
       if (answer == null) {
         throw Exception('no answer received!');
       }
-      print('answer $answer');
+
       final jsonBody = answer.replaceAll('```json', '').replaceAll('```', '');
       final Map<String, dynamic> jsonDecoded = jsonDecode(jsonBody);
       final allResult = jsonDecoded['result'] as List;
@@ -124,174 +125,338 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  List<Widget> _firstFlow(BuildContext context) {
+    return [
+      const SizedBox(
+        height: 52,
+      ),
+      const Center(
+        child: Text(
+          'Calculate Ideal Weight',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      const SizedBox(
+        height: 12.0,
+      ),
+      const Center(
+        child: Text(
+          'We use AI to help you find the best weight for your body.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+          ),
+        ),
+      ),
+      const SizedBox(
+        height: 12.0,
+      ),
+      const Text(
+        'Gender',
+        style: TextStyle(
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(
+        height: 8.0,
+      ),
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.black12,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: DropdownButton<Gender>(
+          isExpanded: true,
+          value: gender,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          underline: const SizedBox.shrink(),
+          items: Gender.values
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(
+                    e.name,
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (newGender) {
+            if (newGender != null) {
+              setState(() {
+                gender = newGender;
+              });
+            }
+          },
+        ),
+      ),
+      const SizedBox(
+        height: 12.0,
+      ),
+      const Text(
+        'Age',
+        style: TextStyle(
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(
+        height: 8.0,
+      ),
+      TextField(
+        controller: _ageController,
+        decoration: const InputDecoration(
+            border: OutlineInputBorder(
+              borderSide: BorderSide.none,
+            ),
+            fillColor: Colors.black12,
+            filled: true,
+            labelText: 'Age (in years)',
+            hintText: 'Age (in years)'),
+      ),
+      const SizedBox(
+        height: 12,
+      ),
+      const Text(
+        'Weight',
+        style: TextStyle(
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(
+        height: 8.0,
+      ),
+      TextField(
+        controller: _weightController,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(
+            borderSide: BorderSide.none,
+          ),
+          fillColor: Colors.black12,
+          filled: true,
+          labelText: 'Weight (in Kg)',
+        ),
+      ),
+      const SizedBox(
+        height: 12,
+      ),
+      const Text(
+        'Height',
+        style: TextStyle(
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(
+        height: 8.0,
+      ),
+      TextField(
+        controller: _heightController,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(
+            borderSide: BorderSide.none,
+          ),
+          fillColor: Colors.black12,
+          filled: true,
+          labelText: 'Height (in cm)',
+        ),
+      ),
+      const Spacer(),
+      SizedBox(
+        width: double.infinity,
+        child: MaterialButton(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          onPressed: !canSubmit
+              ? null
+              : () async {
+                  await generateTargetCaloriesPerDay(
+                    isMale: gender == Gender.male,
+                    age: int.parse(_ageController.text),
+                    height: int.parse(_heightController.text),
+                    weight: int.parse(_weightController.text),
+                  );
+                },
+          padding: const EdgeInsets.all(8),
+          color: Colors.blue,
+          disabledColor: Colors.blue.withOpacity(0.25),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : const Text(
+                  'Get Started',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
+        ),
+      ),
+      const SizedBox(
+        height: 8,
+      ),
+    ];
+  }
+
+  List<Widget> _secondFlow(BuildContext context) {
+    return [
+      const SizedBox(
+        height: 52.0,
+      ),
+      const Center(
+        child: Text(
+          'Set Your Goals',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      const SizedBox(
+        height: 32.0,
+      ),
+      const Center(
+        child: Text(
+          'What\'s your goal?',
+          style: TextStyle(
+            fontSize: 22.0,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      const SizedBox(
+        height: 12,
+      ),
+      const Center(
+        child: Text(
+          'Choose a weight loss or gain plan. You can adjust it later.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16.0,
+          ),
+        ),
+      ),
+      const SizedBox(
+        height: 16,
+      ),
+      ...weightToCaloriesConsumption.keys.map(
+        (weight) {
+          final isSelected = weightTarget == weight;
+
+          return Container(
+            margin: const EdgeInsets.only(
+              bottom: 16,
+            ),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.blue.withOpacity(0.25) : null,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  weightTarget = weight;
+                  caloriesTarget = weightToCaloriesConsumption[weight];
+                });
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$weight kilogram',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        Text(
+                          'Suggested daily calories: ${weightToCaloriesConsumption[weight]} calories',
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: Image.asset(
+                      'assets/images/weight_2.png',
+                    ),
+                  )
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      const Spacer(),
+      SizedBox(
+        width: double.infinity,
+        child: MaterialButton(
+          onPressed: !canSaveTarget
+              ? null
+              : () async {
+                  await sharedPrefsController.setHasEnteredTarget(true);
+                  await sharedPrefsController.setWeight(weightTarget!);
+                  await sharedPrefsController
+                      .setTargetCaloriesPerDay(caloriesTarget!);
+
+                  if (context.mounted) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FoodGalleryPage(
+                          aiController: aiController,
+                          sharedPreferencesController: sharedPrefsController,
+                        ),
+                      ),
+                    );
+                  }
+                },
+          color: Colors.blue,
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : const Text(
+                  'Continue',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
+        ),
+      ),
+      const SizedBox(
+        height: 8,
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Gemini AI Example Page',
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (weightToCaloriesConsumption.isNotEmpty) ...[
-              const Text(
-                'Pick your weight and calories target',
-              ),
-              const SizedBox(
-                height: 16,
-              ),
-              ...weightToCaloriesConsumption.keys.map(
-                (weight) {
-                  final isSelected = weightTarget == weight;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: 8.0,
-                    ),
-                    child: ListTile(
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                          color: isSelected ? Colors.blue : Colors.black54,
-                        ),
-                      ),
-                      title: Text(
-                        'Weight: $weight kilogram',
-                      ),
-                      subtitle: Text(
-                        'Calories target daily: ${weightToCaloriesConsumption[weight]} calories',
-                      ),
-                      onTap: () {
-                        setState(() {
-                          weightTarget = weight;
-                          caloriesTarget = weightToCaloriesConsumption[weight];
-                        });
-                      },
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(
-                height: 16,
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: MaterialButton(
-                  onPressed: !canSaveTarget
-                      ? null
-                      : () async {
-                          await sharedPrefsController.setHasEnteredTarget(true);
-                          await sharedPrefsController.setWeight(weightTarget!);
-                          await sharedPrefsController
-                              .setTargetCaloriesPerDay(caloriesTarget!);
-
-                          if (context.mounted) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FoodGalleryPage(
-                                  aiController: aiController,
-                                  sharedPreferencesController:
-                                      sharedPrefsController,
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                  color: Colors.blue,
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text(
-                          'Save target',
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                ),
-              ),
-            ] else ...[
-              const Text(
-                'Gender',
-              ),
-              DropdownButton<Gender>(
-                isExpanded: true,
-                value: gender,
-                items: Gender.values
-                    .map(
-                      (e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(e.name),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (newGender) {
-                  if (newGender != null) {
-                    setState(() {
-                      gender = newGender;
-                    });
-                  }
-                },
-              ),
-              TextField(
-                controller: _ageController,
-                decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Age (in years)',
-                    hintText: 'Age (in years)'),
-              ),
-              const SizedBox(
-                height: 16,
-              ),
-              TextField(
-                controller: _weightController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Weight (in Kg)',
-                ),
-              ),
-              const SizedBox(
-                height: 16,
-              ),
-              TextField(
-                controller: _heightController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Height (in cm)',
-                ),
-              ),
-              const SizedBox(
-                height: 16,
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: MaterialButton(
-                  onPressed: !canSubmit
-                      ? null
-                      : () async {
-                          await generateTargetCaloriesPerDay(
-                            isMale: gender == Gender.male,
-                            age: int.parse(_ageController.text),
-                            height: int.parse(_heightController.text),
-                            weight: int.parse(_weightController.text),
-                          );
-                        },
-                  color: Colors.blue,
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text(
-                          'Submit',
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                ),
-              ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16.0,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (weightToCaloriesConsumption.isNotEmpty) ...[
+                ..._secondFlow(context),
+              ] else ...[
+                ..._firstFlow(context),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

@@ -15,7 +15,6 @@ dependencies:
   google_generative_ai: ^0.4.6
   image_picker: ^1.1.2
   shared_preferences: ^2.3.3
-  sqflite: ^2.4.1
   intl: ^0.20.0
 
 dev_dependencies:
@@ -25,5 +24,25 @@ dev_dependencies:
   flutter_lints: ^3.0.0
 
 flutter:
-
   uses-material-design: true
+
+  assets:
+    - assets/images/
+
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-ExtraLight.ttf
+          weight: 100
+        - asset: assets/fonts/Manrope-Light.ttf
+          weight: 200
+        - asset: assets/fonts/Manrope-Medium.ttf
+          weight: 300
+        - asset: assets/fonts/Manrope-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Manrope-SemiBold.ttf
+          weight: 500
+        - asset: assets/fonts/Manrope-Bold.ttf
+          weight: 600
+        - asset: assets/fonts/Manrope-ExtraBold.ttf
+          weight: 700
